@@ -1,0 +1,4 @@
+@EndUserText.label: 'service definition for tax invoice'
+define service ZSD_TAX_INVOICE {
+  expose ZC_TAX_INVOICE;
+}

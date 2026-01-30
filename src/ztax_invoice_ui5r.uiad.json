@@ -1,0 +1,35 @@
+{
+  "formatVersion": "2",
+  "header": {
+    "description": "An SAP Fiori application.",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "appType": "ui5",
+    "catalogId": "SAP_TC_UI5_REPO_UIAD",
+    "targetMappingTitle": "Tax Invoice"
+  },
+  "ui5AppDetails": {
+    "appId": "ztaxinvoice"
+  },
+  "navigation": {
+    "targetMappingId": "UI5R_11A6F24CD44A3A21552D34BD3695D26358580E98_TM",
+    "semanticObject": "ztax_invoice",
+    "action": "display",
+    "desktop": true,
+    "tablet": true,
+    "phone": true
+  },
+  "tiles": [
+    {
+      "id": "UI5R_11A6F24CD44A3A21552D34BD3695D26358580E98_AL",
+      "tileType": "static",
+      "isDefault": true,
+      "standard": {
+        "title": "Tax Invoice",
+        "icon": "sap-icon://legend"
+      }
+    }
+  ]
+}
