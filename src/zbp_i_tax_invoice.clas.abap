@@ -1,4 +1,6 @@
 CLASS zbp_i_tax_invoice DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_tax_invoice.
+protected section.
+private section.
 ENDCLASS.
 
 

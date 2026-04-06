@@ -15,6 +15,9 @@ authorization master ( instance )
     {
       billingdocument = billingdocument;
       base64        = base64;
+      base64_4    = base64_4;
+      base64_5    = base64_5;
+      base64_6    = base64_6;
     }
 
 

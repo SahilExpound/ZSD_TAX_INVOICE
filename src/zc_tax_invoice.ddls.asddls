@@ -12,14 +12,20 @@ define root view entity ZC_TAX_INVOICE as projection on zi_tax_invoice
   type: #IDENTIFICATION_REFERENCE,
   label: 'Tax Invoice',
    position: 10 }]
-       @UI.lineItem:       [{ position: 10, label: 'billingdocument' },{ type: #FOR_ACTION , dataAction: 'ZPRINT', label: 'Generate Print'}]
+       @UI.lineItem:       [{ position: 10, label: 'Billingdocument' },{ type: #FOR_ACTION , dataAction: 'ZPRINT', label: 'Generate Print'}]
   @UI.identification: [{ position: 10, label: 'billingdocument' }]
   @UI.selectionField: [{ position: 10 }]
-    key billingdocument,
+    key BillingDocument,
+//    key CompanyCode,
+//    key FiscalYear,
 
     base64,
+    base64_4,
+    base64_5,
+    base64_6,
     m_ind
 }
+
 
 
 

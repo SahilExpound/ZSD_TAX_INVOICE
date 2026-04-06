@@ -39,6 +39,8 @@ CLASS lsc_zi_tax_invoice IMPLEMENTATION.
             background_process->save_for_execution( ).
 
           CATCH cx_bgmc INTO DATA(exception).
+
+          DATA(lv_text) = exception->get_text( ).
             "handle exception
         ENDTRY.
 
