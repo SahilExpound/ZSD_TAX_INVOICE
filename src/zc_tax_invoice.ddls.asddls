@@ -23,6 +23,7 @@ define root view entity ZC_TAX_INVOICE as projection on zi_tax_invoice
     base64_4,
     base64_5,
     base64_6,
+//    base64_main,
     m_ind
 }
 

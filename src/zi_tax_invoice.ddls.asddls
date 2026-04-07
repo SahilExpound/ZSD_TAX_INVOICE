@@ -18,6 +18,7 @@ define root view entity zi_tax_invoice
       b.base64_4,
       b.base64_5,
       b.base64_6,
+//      b.base64_main,
       b.m_ind
 }
 where a.BillingDocumentType = 'F2'

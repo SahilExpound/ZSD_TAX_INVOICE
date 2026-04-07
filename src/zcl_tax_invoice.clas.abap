@@ -8,6 +8,8 @@ CLASS zcl_tax_invoice DEFINITION
     METHODS get_pdf_64
       IMPORTING
         VALUE(io_billingdocument) TYPE i_billingdocument-billingdocument
+*        vaLUE(io_text)            tYPE string
+        VALUE(iv_copy_text) TYPE string
       RETURNING
         VALUE(pdf_64)             TYPE string.
 
@@ -49,12 +51,15 @@ CLASS zcl_tax_invoice DEFINITION
       RETURNING
         VALUE(rv_out) TYPE string.
 
+*        data im_text tYPE string.
+
   PROTECTED SECTION.
   PRIVATE SECTION.
 
     METHODS build_xml
       IMPORTING
         VALUE(io_billingdocument) TYPE i_billingdocument-billingdocument
+        value(io_text) type string
         VALUE(iv_copy_text)       TYPE string OPTIONAL
       RETURNING
         VALUE(rv_xml)             TYPE string.
@@ -136,104 +141,138 @@ CLASS zcl_tax_invoice IMPLEMENTATION.
 
     ENDIF.
 
-    DATA(lv_xml) = build_xml(
-                      io_billingdocument = io_billingdocument ).
 
-    SELECT SINGLE
-   salesorganization
-   FROM i_billingdocument
-   WHERE billingdocument = @io_billingdocument
-   INTO @DATA(mv_salesorg).
-
-    SELECT SINGLE
-    irn
-    FROM zi_billing_inv
-    WHERE billingdocument = @io_billingdocument
-    INTO @DATA(lv_irn).
-
-
-
-
-
-
-
-    DATA lv_template TYPE string.
+*    if im_text is iNITIAL.
+*     im_text =  io_text.
+*    endif.
+*    DATA(lv_xml) = build_xml(
+*                      io_billingdocument = io_billingdocument
+*                      io_text    = im_text ).
 *
-*         if     mv_salesorg = '1000'.
-*           lv_template = 'ZSD_TAX_INVOICE/ZSD_TAX_INVOICE'.
-*         elseif mv_salesorg  = '2000'.
-*         lv_template   =  'ZSD_MDR/ZSD_MDR'.
-*         else.
-*         lv_template = 'ZSD_TAX_INVOICE/ZSD_TAX_INVOICE'.
-*         enDIF.
-
-
-    IF mv_salesorg = '1000' AND lv_irn IS NOT INITIAL.
-      lv_template = 'ZSD_TAX_INVOICE/ZSD_TAX_INVOICE'.
-    ELSEIF  mv_salesorg = '1000' AND lv_irn  IS INITIAL.
-      lv_template = 'ZSD_TAX_DRAFT/ZSD_TAX_DRAFT'.
-    ELSEIF mv_salesorg  = '2000'  AND lv_irn IS NOT INITIAL.
-      lv_template   =  'ZSD_MDR/ZSD_MDR'.
-    ELSEIF mv_salesorg  = '2000' AND lv_irn  IS INITIAL.
-      lv_template   =  'ZSD_MDR_WAT/ZSD_MDR_WAT'.
-    ENDIF.
-
-
-*DATA:
-*      lt_copy TYPE TABLE OF string,
-*      lv_xml TYPE string,
-*      lv_xml_all TYPE string.
-**      lv_template TYPE string VALUE 'Z_TAX_INVOICE'.  "your template name
-
-
-
-
-
-*    CALL METHOD zadobe_call=>getpdf
-*      EXPORTING
-*        template = 'ZSD_TAX_4/ZSD_TAX_4'
-*        xmldata  = lv_xml
-*      RECEIVING
-*        result   = DATA(lv_result).
-
-*    CALL METHOD zadobe_call=>getpdf
-*      EXPORTING
-*        template = lv_template
-*        xmldata  = lv_xml
-*      RECEIVING
-*        result   = DATA(lv_result).
+*    SELECT SINGLE
+*   salesorganization
+*   FROM i_billingdocument
+*   WHERE billingdocument = @io_billingdocument
+*   INTO @DATA(mv_salesorg).
+*
+*    SELECT SINGLE
+*    irn
+*    FROM zi_billing_inv
+*    WHERE billingdocument = @io_billingdocument
+*    INTO @DATA(lv_irn).
+*
+*
+*
+*
+*
+*
+*
+*    DATA lv_template TYPE string.
 **
-*    IF lv_result IS NOT INITIAL.
-*      pdf_64 = lv_result.
+**         if     mv_salesorg = '1000'.
+**           lv_template = 'ZSD_TAX_INVOICE/ZSD_TAX_INVOICE'.
+**         elseif mv_salesorg  = '2000'.
+**         lv_template   =  'ZSD_MDR/ZSD_MDR'.
+**         else.
+**         lv_template = 'ZSD_TAX_INVOICE/ZSD_TAX_INVOICE'.
+**         enDIF.
+*
+*
+*    IF mv_salesorg = '1000' AND lv_irn IS NOT INITIAL.
+*      lv_template = 'ZSD_TAX_INVOICE/ZSD_TAX_INVOICE'.
+*    ELSEIF  mv_salesorg = '1000' AND lv_irn  IS INITIAL.
+*      lv_template = 'ZSD_TAX_DRAFT/ZSD_TAX_DRAFT'.
+*    ELSEIF mv_salesorg  = '2000'  AND lv_irn IS NOT INITIAL.
+*      lv_template   =  'ZSD_MDR/ZSD_MDR'.
+*    ELSEIF mv_salesorg  = '2000' AND lv_irn  IS INITIAL.
+*      lv_template   =  'ZSD_MDR_WAT/ZSD_MDR_WAT'.
 *    ENDIF.
+*
+*
+**DATA:
+**      lt_copy TYPE TABLE OF string,
+**      lv_xml TYPE string,
+**      lv_xml_all TYPE string.
+***      lv_template TYPE string VALUE 'Z_TAX_INVOICE'.  "your template name
+*
+*
+*
+*
+*
+**    CALL METHOD zadobe_call=>getpdf
+**      EXPORTING
+**        template = 'ZSD_TAX_4/ZSD_TAX_4'
+**        xmldata  = lv_xml
+**      RECEIVING
+**        result   = DATA(lv_result).
+*
+**    CALL METHOD zadobe_call=>getpdf
+**      EXPORTING
+**        template = lv_template
+**        xmldata  = lv_xml
+**      RECEIVING
+**        result   = DATA(lv_result).
+***
+**    IF lv_result IS NOT INITIAL.
+**      pdf_64 = lv_result.
+**    ENDIF.
+*
+*DATA: lt_copy TYPE TABLE OF string,
+*      lv_pdf  TYPE string.
+*
+**lt_copy = VALUE #(
+**  ( CONV string( 'Original for Buyer' ) )
+**  ( CONV string( 'Duplicate for Transporter' ) )
+**  ( CONV string( 'Triplicate for Assessee' ) )
+**  ( CONV string( 'Extra Copy' ) )
+**).
+*
+**LOOP AT lt_copy INTO DATA(lv_copy_text).
+*
+*  lv_xml = build_xml(
+*              io_billingdocument = io_billingdocument
+*              io_text    = im_text
+*               ).
+*
+**  CALL METHOD zadobe_call=>getpdf
+**    EXPORTING
+**      template = lv_template
+**      xmldata  = lv_xml
+**    RECEIVING
+**      result   = lv_pdf.
+*
+*
+*  CALL METHOD zadobe_call=>getpdf
+*    EXPORTING
+*      template = 'ZSD_TAX_4/ZSD_TAX_4'
+*      xmldata  = lv_xml
+*    RECEIVING
+*      result   = lv_pdf.
+*
+*  " store or append PDFs
+*  CONCATENATE pdf_64 lv_pdf INTO pdf_64.
 
-DATA: lt_copy TYPE TABLE OF string,
-      lv_pdf  TYPE string.
 
-lt_copy = VALUE #(
-  ( CONV string( 'Original for Buyer' ) )
-  ( CONV string( 'Duplicate for Transporter' ) )
-  ( CONV string( 'Triplicate for Assessee' ) )
-  ( CONV string( 'Extra Copy' ) )
-).
 
-LOOP AT lt_copy INTO DATA(lv_copy_text).
+  DATA(lv_xml) = build_xml(
+                    io_billingdocument = io_billingdocument
+                    io_text            = iv_copy_text ).
 
-  lv_xml = build_xml(
-              io_billingdocument = io_billingdocument
-              iv_copy_text       = lv_copy_text ).
+  DATA lv_pdf TYPE string.
 
   CALL METHOD zadobe_call=>getpdf
     EXPORTING
-      template = lv_template
+      template = 'ZSD_TAX_4/ZSD_TAX_4'
       xmldata  = lv_xml
     RECEIVING
       result   = lv_pdf.
 
-  " store or append PDFs
-  CONCATENATE pdf_64 lv_pdf INTO pdf_64.
+  pdf_64 = lv_pdf.
 
-ENDLOOP.
+
+
+
+*ENDLOOP.
 
   ENDMETHOD.
 
@@ -549,13 +588,6 @@ ENDLOOP.
     FROM i_plant
     WHERE plant = @wa_plant-plant
     INTO @DATA(wa_plantid).
-
-
-
-
-
-
-
 
     IF sy-subrc = 0.
 
@@ -1139,441 +1171,441 @@ INTO TABLE @DATA(lt_prcg).
     WHERE billingdocument = @io_billingdocument
     INTO @DATA(lv_lrvhedet).
 
-
-
-
     lv_placeof = |{ placeofsupply-region } , { lv_gstinb+0(2)  }|.
-
-*    DATA(lv_header) =
-*    |<form1>| &&
-*    |  <table>| &&
-*    |    <Table2>| &&
-*    |      <HeaderRow>| &&
-*    | <frg>{ me->escape_xml( lv_grgname ) }</frg> | &&
-*    | </HeaderRow>| &&
-*    |      <Row1/>| .
-*
-*
-*    DATA: lv_table TYPE string,
-*          lv_row   TYPE string,
-*          lv_sr_no TYPE i VALUE 0.
-**      lv_totaltax  type   i_billingdocumentitem-netamount.
-*
-*    LOOP AT gt_final INTO gs_final.
-*
-*      lv_sr_no += 1.
-*
-*      CLEAR lv_table.
-*
-*      lv_row &&=
-*
-*      |      <Row2>| &&
-*      |        <sno>{ lv_sr_no }</sno>| &&
-*      |        <desc>{ gs_final-description }</desc>| &&
-*      |        <hsn>{ gs_final-hsn }</hsn>| &&
-*      |        <qty>{  gs_final-quantity  }</qty>| &&
-*      |        <uom>{  gs_final-uom  }</uom>| &&
-*      |        <ratre>{ gs_final-rate }</ratre>| &&
-*      |        <total>{ gs_final-total    }</total>| &&
-*      |         <fregt>{  gs_final-freight }</fregt>| &&
-*      |        <taxable>{  gs_final-taxable_amt  }</taxable>| &&
-*      |        <chstrate>{ gs_final-perc }</chstrate>| &&
-*      |        <cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
-*      |        <sgstrate>{  gs_final-pers  } </sgstrate>| &&
-*      |        <sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
-*      |        <igstrate>{ gs_final-peri } </igstrate>| &&
-*      |        <igstamt>{ gs_final-igst_amt }</igstamt>| &&
-*      |      </Row2>| .
-*
-*
-*      lv_table = lv_table && lv_row.
-*
-*    ENDLOOP.
-*
-*
-*    lv_table  = lv_table &&
-*    |      <FooterRow>| &&
-*    |        <Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
-*    |        <cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
-*    |        <sgstto>{ gv_sgst_total }</sgstto>| &&
-*    |        <igsttop>{ gv_igst_total }</igsttop>| &&
-*    |      </FooterRow>| &&
-*    |    </Table2>| &&
-*    |   <totatax>{ lv_totaltax }</totatax>|  &&
-*    | <tcsamnt>{ lv_tcsamnt }</tcsamnt> | &&
-*    |  <tcsrate>{ lv_tcsrate }</tcsrate> | .
-*
-*    DATA(lv_footer) =
-*    |  </table>| &&
-*    |  <Subform2>| &&
-*    |    <totatax>{ lv_totaltax }</totatax>| &&
-*    |  </Subform2>| &&
-*    |  <packingdetails>{ lv_pk }</packingdetails>| &&
-*    |  <kgs></kgs>| &&
-*    |  <invinwords>{ lv_inv_words }</invinwords>| &&
-*    |  <invoicevalue>{ lv_invalue }</invoicevalue>| &&
-*    |  <Subform3/>| &&
-*    |  <addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
-*    |  <ASNNO>{ lv_asn }</ASNNO>| &&
-*    |  <Eway>{ lv_waybillno }</Eway>| &&
-*    |  <header>{ lv_comp }</header>| &&
-*    |  <addr>{ lv_hdaddr }</addr>| &&
-*    |  <amail>{ lv_email }</amail>| &&
-*    |  <web>{ website }</web>| &&
-*    |  <regoff>{ lv_regoff }</regoff>| &&
-*    |  <gstinno>{ lv_gstino }</gstinno>| &&
-*    |  <invdate>{ lv_date }</invdate>| &&
-*    |  <RNO>{ lv_lrvhedet-yy1_lrno_bdh }</RNO>| &&
-*    |  <VEHNO>{ lv_lrvhedet-yy1_vehicleno_bdh }</VEHNO>| &&
-*    |  <DESPThr>{ lv_distr }</DESPThr>| &&
-*    |  <BUPHNO>{ lv_po }</BUPHNO>| &&
-*    |  <BUYPODT>{ lv_po_dt }</BUYPODT>| &&
-*    |  <TFPAY>{ lv_terofpay }</TFPAY>| &&
-*    |  <addrbill>{ lv_addressbill }</addrbill>| &&
-*    |  <addrship>{ lv_addressship }</addrship>| &&
-*    |  <gstinbship>{ lv_gstins }</gstinbship>| &&
-*    |  <statecodeship>{ lv_statecode_ship  }</statecodeship>| &&
-*    |  <statecodebill>{ lv_statecode_bill  }</statecodebill>| &&
-*    |  <msme>{ lv_udyms }</msme>| &&
-*    |  <nameofbank>{ lv_bankname }</nameofbank>| &&
-*    |  <accno>{ lv_bankacc }</accno>| &&
-*    |  <bankbrcn>{ lv_branch }</bankbrcn>| &&
-*    |  <ifsc>{ iv_bankinternal_id }</ifsc>| &&
-*    |  <E-invoiceNo>{ lv_einvno }</E-invoiceNo>| &&
-*    |  <acknno>{ lv_ack }</acknno>| &&
-*    |  <placeofsupply>{ lv_region_full }</placeofsupply>| &&
-*    |  <invno>{ lv_invno }</invno>| &&
-*    |  <gstinbill>{ lv_gstinb  }</gstinbill>| &&
-*    |  <phno>{ lv_telph }</phno>| &&
-*    |  <cin>{ lv_cin }</cin>| &&
-*    |   <udyaad>{ lv_udym }</udyaad> | &&
-*    | <QRCodeBarcode1>{ qr  }</QRCodeBarcode1>| &&
-*    |<placeosupply>{ lv_placeof }</placeosupply>| &&
-*    |</form1>| .
-*
-*
-**rv_xml = lv_header.
-*    rv_xml = |{ lv_header } { lv_table }{ lv_footer }|.
-
 
     DATA(lv_header) =
     |<form1>| &&
-    |<a>| &&
-    |<table>| &&
-    |<Table2>| &&
-    |<HeaderRow>| &&
-    |<frg>{ me->escape_xml( lv_grgname ) }</frg>| &&
-    |</HeaderRow>| &&
-    |<Row1/>| .
+    |  <table>| &&
+    |    <Table2>| &&
+    |      <HeaderRow>| &&
+    | <frg>{ me->escape_xml( lv_grgname ) }</frg> | &&
+    | </HeaderRow>| &&
+    |      <Row1/>| .
+
 
     DATA: lv_table TYPE string,
           lv_row   TYPE string,
           lv_sr_no TYPE i VALUE 0.
+*      lv_totaltax  type   i_billingdocumentitem-netamount.
 
     LOOP AT gt_final INTO gs_final.
+
       lv_sr_no += 1.
+
       CLEAR lv_table.
+
       lv_row &&=
-|<Row2>| &&
-|<sno>{ lv_sr_no }</sno>| &&
-|<desc>{ gs_final-description }</desc>| &&
-|<hsn>{ gs_final-hsn }</hsn>| &&
-|<qty>{ gs_final-quantity }</qty>| &&
-|<uom>{ gs_final-uom }</uom>| &&
-|<ratre>{ gs_final-rate }</ratre>| &&
-|<total>{ gs_final-total }</total>| &&
-|<fregt>{ gs_final-freight }</fregt>| &&
-|<taxable>{ gs_final-taxable_amt }</taxable>| &&
-|<chstrate>{ gs_final-perc }</chstrate>| &&
-|<cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
-|<sgstrate>{ gs_final-pers }</sgstrate>| &&
-|<sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
-|<igstrate>{ gs_final-peri }</igstrate>| &&
-|<igstamt>{ gs_final-igst_amt }</igstamt>| &&
-|</Row2>| .
+
+      |      <Row2>| &&
+      |        <sno>{ lv_sr_no }</sno>| &&
+      |        <desc>{ gs_final-description }</desc>| &&
+      |        <hsn>{ gs_final-hsn }</hsn>| &&
+      |        <qty>{  gs_final-quantity  }</qty>| &&
+      |        <uom>{  gs_final-uom  }</uom>| &&
+      |        <ratre>{ gs_final-rate }</ratre>| &&
+      |        <total>{ gs_final-total    }</total>| &&
+      |         <fregt>{  gs_final-freight }</fregt>| &&
+      |        <taxable>{  gs_final-taxable_amt  }</taxable>| &&
+      |        <chstrate>{ gs_final-perc }</chstrate>| &&
+      |        <cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
+      |        <sgstrate>{  gs_final-pers  } </sgstrate>| &&
+      |        <sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
+      |        <igstrate>{ gs_final-peri } </igstrate>| &&
+      |        <igstamt>{ gs_final-igst_amt }</igstamt>| &&
+      |      </Row2>| .
+
+
       lv_table = lv_table && lv_row.
+
     ENDLOOP.
 
-    lv_table = lv_table &&
-|<FooterRow>| &&
-|<Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
-|<cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
-|<sgstto>{ gv_sgst_total }</sgstto>| &&
-|<igsttop>{ gv_igst_total }</igsttop>| &&
-|</FooterRow>| &&
-|</Table2>| &&
-|<totatax>{ lv_totaltax }</totatax>| &&
-|<tcsamnt>{ lv_tcsamnt }</tcsamnt>| &&
-|<tcsrate>{ lv_tcsrate }</tcsrate>| .
+
+
+
+    lv_table  = lv_table &&
+    |      <FooterRow>| &&
+    |        <Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
+    |        <cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
+    |        <sgstto>{ gv_sgst_total }</sgstto>| &&
+    |        <igsttop>{ gv_igst_total }</igsttop>| &&
+    |      </FooterRow>| &&
+    |    </Table2>| &&
+    |   <totatax>{ lv_totaltax }</totatax>|  &&
+    | <tcsamnt>{ lv_tcsamnt }</tcsamnt> | &&
+    |  <tcsrate>{ lv_tcsrate }</tcsrate> | .
 
     DATA(lv_footer) =
-|</table>| &&
-|<packingdetails>{ me->escape_xml( lv_pk ) }</packingdetails>| &&
-|<kgs></kgs>| &&
-|<invinwords>{ lv_inv_words }</invinwords>| &&
-|<invoicevalue>{ lv_invalue }</invoicevalue>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
-|<Eway>{ lv_waybillno }</Eway>| &&
-|<ASNNO>{ lv_asn }</ASNNO>| &&
-|<orgfor>Original for Buyer</orgfor>| &&
-|</a>| .
+    |  </table>| &&
+    |  <Subform2>| &&
+    |    <totatax>{ lv_totaltax }</totatax>| &&
+    |  </Subform2>| &&
+    |  <packingdetails>{ lv_pk }</packingdetails>| &&
+    |  <kgs></kgs>| &&
+    |  <invinwords>{ lv_inv_words }</invinwords>| &&
+    |  <invoicevalue>{ lv_invalue }</invoicevalue>| &&
+    |  <Subform3/>| &&
+    |  <addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
+    |  <ASNNO>{ lv_asn }</ASNNO>| &&
+    |  <Eway>{ lv_waybillno }</Eway>| &&
+    |  <header>{ lv_comp }</header>| &&
+    |  <addr>{ lv_hdaddr }</addr>| &&
+    |  <amail>{ lv_email }</amail>| &&
+    |  <web>{ website }</web>| &&
+    |  <regoff>{ lv_regoff }</regoff>| &&
+    |  <gstinno>{ lv_gstino }</gstinno>| &&
+    |  <invdate>{ lv_date }</invdate>| &&
+    |  <RNO>{ lv_lrvhedet-yy1_lrno_bdh }</RNO>| &&
+    |  <VEHNO>{ lv_lrvhedet-yy1_vehicleno_bdh }</VEHNO>| &&
+    |  <DESPThr>{ lv_distr }</DESPThr>| &&
+    |  <BUPHNO>{ lv_po }</BUPHNO>| &&
+    |  <BUYPODT>{ lv_po_dt }</BUYPODT>| &&
+    |  <TFPAY>{ lv_terofpay }</TFPAY>| &&
+    |  <addrbill>{ lv_addressbill }</addrbill>| &&
+    |  <addrship>{ lv_addressship }</addrship>| &&
+    |  <gstinbship>{ lv_gstins }</gstinbship>| &&
+    |  <statecodeship>{ lv_statecode_ship  }</statecodeship>| &&
+    |  <statecodebill>{ lv_statecode_bill  }</statecodebill>| &&
+    |  <msme>{ lv_udyms }</msme>| &&
+    |  <nameofbank>{ lv_bankname }</nameofbank>| &&
+    |  <accno>{ lv_bankacc }</accno>| &&
+    |  <bankbrcn>{ lv_branch }</bankbrcn>| &&
+    |  <ifsc>{ iv_bankinternal_id }</ifsc>| &&
+    |  <E-invoiceNo>{ lv_einvno }</E-invoiceNo>| &&
+    |  <acknno>{ lv_ack }</acknno>| &&
+    |  <placeofsupply>{ lv_region_full }</placeofsupply>| &&
+    |  <invno>{ lv_invno }</invno>| &&
+    |  <gstinbill>{ lv_gstinb  }</gstinbill>| &&
+    |  <phno>{ lv_telph }</phno>| &&
+    |  <cin>{ lv_cin }</cin>| &&
+    |   <udyaad>{ lv_udym }</udyaad> | &&
+    | <QRCodeBarcode1>{ qr  }</QRCodeBarcode1>| &&
+    |<placeosupply>{ lv_placeof }</placeosupply>| &&
+    |   <orgfor>{ io_text  }</orgfor> | &&
+    |</form1>| .
 
-    " ============================================================
-    " COPY 2 - Duplicate for Transporter
-    " ============================================================
 
-    DATA(lv_header_b) =
-|<b>| &&
-|<table>| &&
-|<Table2>| &&
-|<HeaderRow>| &&
-|<frg>{ me->escape_xml( lv_grgname ) }</frg>| &&
-|</HeaderRow>| &&
-|<Row1/>| .
+*rv_xml = lv_header.
+    rv_xml = |{ lv_header } { lv_table }{ lv_footer }|.
 
-    DATA: lv_table_b TYPE string,
-          lv_row_b   TYPE string,
-          lv_sr_no_b TYPE i VALUE 0.
 
-    LOOP AT gt_final INTO gs_final.
-      lv_sr_no_b += 1.
-      CLEAR lv_table_b.
-      lv_row_b &&=
-|<Row2>| &&
-|<sno>{ lv_sr_no_b }</sno>| &&
-|<desc>{ gs_final-description }</desc>| &&
-|<hsn>{ gs_final-hsn }</hsn>| &&
-|<qty>{ gs_final-quantity }</qty>| &&
-|<uom>{ gs_final-uom }</uom>| &&
-|<ratre>{ gs_final-rate }</ratre>| &&
-|<total>{ gs_final-total }</total>| &&
-|<fregt>{ gs_final-freight }</fregt>| &&
-|<taxable>{ gs_final-taxable_amt }</taxable>| &&
-|<chstrate>{ gs_final-perc }</chstrate>| &&
-|<cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
-|<sgstrate>{ gs_final-pers }</sgstrate>| &&
-|<sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
-|<igstrate>{ gs_final-peri }</igstrate>| &&
-|<igstamt>{ gs_final-igst_amt }</igstamt>| &&
-|</Row2>| .
-      lv_table_b = lv_table_b && lv_row_b.
-    ENDLOOP.
-
-    lv_table_b = lv_table_b &&
-|<FooterRow>| &&
-|<Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
-|<cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
-|<sgstto>{ gv_sgst_total }</sgstto>| &&
-|<igsttop>{ gv_igst_total }</igsttop>| &&
-|</FooterRow>| &&
-|</Table2>| &&
-|<totatax>{ lv_totaltax }</totatax>| &&
-|<tcsamnt>{ lv_tcsamnt }</tcsamnt>| &&
-|<tcsrate>{ lv_tcsrate }</tcsrate>| .
-
-    DATA(lv_footer_b) =
-|</table>| &&
-|<packingdetails>{ me->escape_xml( lv_pk ) }</packingdetails>| &&
-|<kgs></kgs>| &&
-|<invinwords>{ lv_inv_words }</invinwords>| &&
-|<invoicevalue>{ lv_invalue }</invoicevalue>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
-|<Eway>{ lv_waybillno }</Eway>| &&
-|<ASNNO>{ lv_asn }</ASNNO>| &&
-|<orgfor>Duplicate for Transporter</orgfor>| &&
-|</b>| .
-
-    " ============================================================
-    " COPY 3 - Triplicate for Assessee
-    " ============================================================
-
-    DATA(lv_header_x) =
-|<x>| &&
-|<table>| &&
-|<Table2>| &&
-|<HeaderRow>| &&
-|<frg>{ me->escape_xml( lv_grgname ) }</frg>| &&
-|</HeaderRow>| &&
-|<Row1/>| .
-
-    DATA: lv_table_x TYPE string,
-          lv_row_x   TYPE string,
-          lv_sr_no_x TYPE i VALUE 0.
-
-    LOOP AT gt_final INTO gs_final.
-      lv_sr_no_x += 1.
-      CLEAR lv_table_x.
-      lv_row_x &&=
-|<Row2>| &&
-|<sno>{ lv_sr_no_x }</sno>| &&
-|<desc>{ gs_final-description }</desc>| &&
-|<hsn>{ gs_final-hsn }</hsn>| &&
-|<qty>{ gs_final-quantity }</qty>| &&
-|<uom>{ gs_final-uom }</uom>| &&
-|<ratre>{ gs_final-rate }</ratre>| &&
-|<total>{ gs_final-total }</total>| &&
-|<fregt>{ gs_final-freight }</fregt>| &&
-|<taxable>{ gs_final-taxable_amt }</taxable>| &&
-|<chstrate>{ gs_final-perc }</chstrate>| &&
-|<cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
-|<sgstrate>{ gs_final-pers }</sgstrate>| &&
-|<sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
-|<igstrate>{ gs_final-peri }</igstrate>| &&
-|<igstamt>{ gs_final-igst_amt }</igstamt>| &&
-|</Row2>| .
-      lv_table_x = lv_table_x && lv_row_x.
-    ENDLOOP.
-
-    lv_table_x = lv_table_x &&
-|<FooterRow>| &&
-|<Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
-|<cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
-|<sgstto>{ gv_sgst_total }</sgstto>| &&
-|<igsttop>{ gv_igst_total }</igsttop>| &&
-|</FooterRow>| &&
-|</Table2>| &&
-|<totatax>{ lv_totaltax }</totatax>| &&
-|<tcsamnt>{ lv_tcsamnt }</tcsamnt>| &&
-|<tcsrate>{ lv_tcsrate }</tcsrate>| .
-
-    DATA(lv_footer_x) =
-|</table>| &&
-|<packingdetails>{ me->escape_xml( lv_pk ) }</packingdetails>| &&
-|<kgs></kgs>| &&
-|<invinwords>{ lv_inv_words }</invinwords>| &&
-|<invoicevalue>{ lv_invalue }</invoicevalue>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
-|<Eway>{ lv_waybillno }</Eway>| &&
-|<ASNNO>{ lv_asn }</ASNNO>| &&
-|<orgfor>Triplicate for Assessee</orgfor>| &&
-|</x>| .
-
-    " ============================================================
-    " COPY 4 - Extra Copy
-    " ============================================================
-
-    DATA(lv_header_d) =
-|<d>| &&
-|<table>| &&
-|<Table2>| &&
-|<HeaderRow>| &&
-|<frg>{ me->escape_xml( lv_grgname ) }</frg>| &&
-|</HeaderRow>| &&
-|<Row1/>| .
-
-    DATA: lv_table_d TYPE string,
-          lv_row_d   TYPE string,
-          lv_sr_no_d TYPE i VALUE 0.
-
-    LOOP AT gt_final INTO gs_final.
-      lv_sr_no_d += 1.
-      CLEAR lv_table_d.
-      lv_row_d &&=
-|<Row2>| &&
-|<sno>{ lv_sr_no_d }</sno>| &&
-|<desc>{ gs_final-description }</desc>| &&
-|<hsn>{ gs_final-hsn }</hsn>| &&
-|<qty>{ gs_final-quantity }</qty>| &&
-|<uom>{ gs_final-uom }</uom>| &&
-|<ratre>{ gs_final-rate }</ratre>| &&
-|<total>{ gs_final-total }</total>| &&
-|<fregt>{ gs_final-freight }</fregt>| &&
-|<taxable>{ gs_final-taxable_amt }</taxable>| &&
-|<chstrate>{ gs_final-perc }</chstrate>| &&
-|<cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
-|<sgstrate>{ gs_final-pers }</sgstrate>| &&
-|<sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
-|<igstrate>{ gs_final-peri }</igstrate>| &&
-|<igstamt>{ gs_final-igst_amt }</igstamt>| &&
-|</Row2>| .
-      lv_table_d = lv_table_d && lv_row_d.
-    ENDLOOP.
-
-    lv_table_d = lv_table_d &&
-|<FooterRow>| &&
-|<Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
-|<cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
-|<sgstto>{ gv_sgst_total }</sgstto>| &&
-|<igsttop>{ gv_igst_total }</igsttop>| &&
-|</FooterRow>| &&
-|</Table2>| &&
-|<totatax>{ lv_totaltax }</totatax>| &&
-|<tcsamnt>{ lv_tcsamnt }</tcsamnt>| &&
-|<tcsrate>{ lv_tcsrate }</tcsrate>| .
-
-    DATA(lv_footer_d) =
-|</table>| &&
-|<packingdetails>{ me->escape_xml( lv_pk ) }</packingdetails>| &&
-|<kgs></kgs>| &&
-|<invinwords>{ lv_inv_words }</invinwords>| &&
-|<invoicevalue>{ lv_invalue }</invoicevalue>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<Subform3/>| &&
-|<addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
-|<Eway>{ lv_waybillno }</Eway>| &&
-|<ASNNO>{ lv_asn }</ASNNO>| &&
-|<orgfor>Extra Copy</orgfor>| &&
-|</d>| .
-
-    " ============================================================
-    " FINAL ASSEMBLE
-    " ============================================================
-
-    DATA(lv_common) =
-|<header>{ lv_comp }</header>| &&
-|<addr>{ lv_hdaddr }</addr>| &&
-|<amail>{ lv_email }</amail>| &&
-|<web>{ website }</web>| &&
-|<regoff>{ lv_regoff }</regoff>| &&
-|<gstinno>{ lv_gstino }</gstinno>| &&
-|<invdate>{ lv_date }</invdate>| &&
-|<RNO>{ lv_lrvhedet-yy1_lrno_bdh }</RNO>| &&
-|<VEHNO>{ lv_lrvhedet-yy1_vehicleno_bdh }</VEHNO>| &&
-|<DESPThr>{ lv_distr }</DESPThr>| &&
-|<BUPHNO>{ lv_po }</BUPHNO>| &&
-|<BUYPODT>{ lv_po_dt }</BUYPODT>| &&
-|<TFPAY>{ lv_terofpay }</TFPAY>| &&
-|<addrbill>{ lv_addressbill }</addrbill>| &&
-|<addrship>{ lv_addressship }</addrship>| &&
-|<gstinbship>{ lv_gstins }</gstinbship>| &&
-|<statecodeship>{ lv_statecode_ship }</statecodeship>| &&
-|<statecodebill>{ lv_statecode_bill }</statecodebill>| &&
-|<msme>{ lv_udyms }</msme>| &&
-|<nameofbank>{ lv_bankname }</nameofbank>| &&
-|<accno>{ lv_bankacc }</accno>| &&
-|<bankbrcn>{ lv_branch }</bankbrcn>| &&
-|<ifsc>{ iv_bankinternal_id }</ifsc>| &&
-|<E-invoiceNo>{ lv_einvno }</E-invoiceNo>| &&
-|<acknno>{ lv_ack }</acknno>| &&
-|<placeofsupply>{ lv_region_full }</placeofsupply>| &&
-|<invno>{ lv_invno }</invno>| &&
-|<gstinbill>{ lv_gstinb }</gstinbill>| &&
-|<phno>{ lv_telph }</phno>| &&
-|<cin>{ lv_cin }</cin>| &&
-|<udyaad>{ lv_udym }</udyaad>| &&
-|<QRCodeBarcode1>{ qr }</QRCodeBarcode1>| &&
-|<placeosupply>{ lv_placeof }</placeosupply>| &&
-|</form1>| .
-
-    rv_xml = lv_header  && lv_table  && lv_footer  &&
-             lv_header_b && lv_table_b && lv_footer_b &&
-             lv_header_x && lv_table_x && lv_footer_x &&
-             lv_header_d && lv_table_d && lv_footer_d &&
-             lv_common.
+*    DATA(lv_header) =
+*    |<form1>| &&
+*    |<a>| &&
+*    |<table>| &&
+*    |<Table2>| &&
+*    |<HeaderRow>| &&
+*    |<frg>{ me->escape_xml( lv_grgname ) }</frg>| &&
+*    |</HeaderRow>| &&
+*    |<Row1/>| .
+*
+*    DATA: lv_table TYPE string,
+*          lv_row   TYPE string,
+*          lv_sr_no TYPE i VALUE 0.
+*
+*    LOOP AT gt_final INTO gs_final.
+*      lv_sr_no += 1.
+*      CLEAR lv_table.
+*      lv_row &&=
+*|<Row2>| &&
+*|<sno>{ lv_sr_no }</sno>| &&
+*|<desc>{ gs_final-description }</desc>| &&
+*|<hsn>{ gs_final-hsn }</hsn>| &&
+*|<qty>{ gs_final-quantity }</qty>| &&
+*|<uom>{ gs_final-uom }</uom>| &&
+*|<ratre>{ gs_final-rate }</ratre>| &&
+*|<total>{ gs_final-total }</total>| &&
+*|<fregt>{ gs_final-freight }</fregt>| &&
+*|<taxable>{ gs_final-taxable_amt }</taxable>| &&
+*|<chstrate>{ gs_final-perc }</chstrate>| &&
+*|<cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
+*|<sgstrate>{ gs_final-pers }</sgstrate>| &&
+*|<sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
+*|<igstrate>{ gs_final-peri }</igstrate>| &&
+*|<igstamt>{ gs_final-igst_amt }</igstamt>| &&
+*|</Row2>| .
+*      lv_table = lv_table && lv_row.
+*    ENDLOOP.
+*
+*    lv_table = lv_table &&
+*|<FooterRow>| &&
+*|<Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
+*|<cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
+*|<sgstto>{ gv_sgst_total }</sgstto>| &&
+*|<igsttop>{ gv_igst_total }</igsttop>| &&
+*|</FooterRow>| &&
+*|</Table2>| &&
+*|<totatax>{ lv_totaltax }</totatax>| &&
+*|<tcsamnt>{ lv_tcsamnt }</tcsamnt>| &&
+*|<tcsrate>{ lv_tcsrate }</tcsrate>| .
+*
+*    DATA(lv_footer) =
+*|</table>| &&
+*|<packingdetails>{ me->escape_xml( lv_pk ) }</packingdetails>| &&
+*|<kgs></kgs>| &&
+*|<invinwords>{ lv_inv_words }</invinwords>| &&
+*|<invoicevalue>{ lv_invalue }</invoicevalue>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
+*|<Eway>{ lv_waybillno }</Eway>| &&
+*|<ASNNO>{ lv_asn }</ASNNO>| &&
+*|<orgfor>{ io_text }</orgfor>| &&
+*|</a>| .
+*
+*    " ============================================================
+*    " COPY 2 - Duplicate for Transporter
+*    " ============================================================
+*
+*    DATA(lv_header_b) =
+*|<b>| &&
+*|<table>| &&
+*|<Table2>| &&
+*|<HeaderRow>| &&
+*|<frg>{ me->escape_xml( lv_grgname ) }</frg>| &&
+*|</HeaderRow>| &&
+*|<Row1/>| .
+*
+*    DATA: lv_table_b TYPE string,
+*          lv_row_b   TYPE string,
+*          lv_sr_no_b TYPE i VALUE 0.
+*
+*    LOOP AT gt_final INTO gs_final.
+*      lv_sr_no_b += 1.
+*      CLEAR lv_table_b.
+*      lv_row_b &&=
+*|<Row2>| &&
+*|<sno>{ lv_sr_no_b }</sno>| &&
+*|<desc>{ gs_final-description }</desc>| &&
+*|<hsn>{ gs_final-hsn }</hsn>| &&
+*|<qty>{ gs_final-quantity }</qty>| &&
+*|<uom>{ gs_final-uom }</uom>| &&
+*|<ratre>{ gs_final-rate }</ratre>| &&
+*|<total>{ gs_final-total }</total>| &&
+*|<fregt>{ gs_final-freight }</fregt>| &&
+*|<taxable>{ gs_final-taxable_amt }</taxable>| &&
+*|<chstrate>{ gs_final-perc }</chstrate>| &&
+*|<cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
+*|<sgstrate>{ gs_final-pers }</sgstrate>| &&
+*|<sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
+*|<igstrate>{ gs_final-peri }</igstrate>| &&
+*|<igstamt>{ gs_final-igst_amt }</igstamt>| &&
+*|</Row2>| .
+*      lv_table_b = lv_table_b && lv_row_b.
+*    ENDLOOP.
+*
+*    lv_table_b = lv_table_b &&
+*|<FooterRow>| &&
+*|<Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
+*|<cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
+*|<sgstto>{ gv_sgst_total }</sgstto>| &&
+*|<igsttop>{ gv_igst_total }</igsttop>| &&
+*|</FooterRow>| &&
+*|</Table2>| &&
+*|<totatax>{ lv_totaltax }</totatax>| &&
+*|<tcsamnt>{ lv_tcsamnt }</tcsamnt>| &&
+*|<tcsrate>{ lv_tcsrate }</tcsrate>| .
+*
+*    DATA(lv_footer_b) =
+*|</table>| &&
+*|<packingdetails>{ me->escape_xml( lv_pk ) }</packingdetails>| &&
+*|<kgs></kgs>| &&
+*|<invinwords>{ lv_inv_words }</invinwords>| &&
+*|<invoicevalue>{ lv_invalue }</invoicevalue>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
+*|<Eway>{ lv_waybillno }</Eway>| &&
+*|<ASNNO>{ lv_asn }</ASNNO>| &&
+*|<orgfor>{ io_text }</orgfor>| &&
+*|</b>| .
+*
+*    " ============================================================
+*    " COPY 3 - Triplicate for Assessee
+*    " ============================================================
+*
+*    DATA(lv_header_x) =
+*|<x>| &&
+*|<table>| &&
+*|<Table2>| &&
+*|<HeaderRow>| &&
+*|<frg>{ me->escape_xml( lv_grgname ) }</frg>| &&
+*|</HeaderRow>| &&
+*|<Row1/>| .
+*
+*    DATA: lv_table_x TYPE string,
+*          lv_row_x   TYPE string,
+*          lv_sr_no_x TYPE i VALUE 0.
+*
+*    LOOP AT gt_final INTO gs_final.
+*      lv_sr_no_x += 1.
+*      CLEAR lv_table_x.
+*      lv_row_x &&=
+*|<Row2>| &&
+*|<sno>{ lv_sr_no_x }</sno>| &&
+*|<desc>{ gs_final-description }</desc>| &&
+*|<hsn>{ gs_final-hsn }</hsn>| &&
+*|<qty>{ gs_final-quantity }</qty>| &&
+*|<uom>{ gs_final-uom }</uom>| &&
+*|<ratre>{ gs_final-rate }</ratre>| &&
+*|<total>{ gs_final-total }</total>| &&
+*|<fregt>{ gs_final-freight }</fregt>| &&
+*|<taxable>{ gs_final-taxable_amt }</taxable>| &&
+*|<chstrate>{ gs_final-perc }</chstrate>| &&
+*|<cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
+*|<sgstrate>{ gs_final-pers }</sgstrate>| &&
+*|<sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
+*|<igstrate>{ gs_final-peri }</igstrate>| &&
+*|<igstamt>{ gs_final-igst_amt }</igstamt>| &&
+*|</Row2>| .
+*      lv_table_x = lv_table_x && lv_row_x.
+*    ENDLOOP.
+*
+*    lv_table_x = lv_table_x &&
+*|<FooterRow>| &&
+*|<Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
+*|<cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
+*|<sgstto>{ gv_sgst_total }</sgstto>| &&
+*|<igsttop>{ gv_igst_total }</igsttop>| &&
+*|</FooterRow>| &&
+*|</Table2>| &&
+*|<totatax>{ lv_totaltax }</totatax>| &&
+*|<tcsamnt>{ lv_tcsamnt }</tcsamnt>| &&
+*|<tcsrate>{ lv_tcsrate }</tcsrate>| .
+*
+*    DATA(lv_footer_x) =
+*|</table>| &&
+*|<packingdetails>{ me->escape_xml( lv_pk ) }</packingdetails>| &&
+*|<kgs></kgs>| &&
+*|<invinwords>{ lv_inv_words }</invinwords>| &&
+*|<invoicevalue>{ lv_invalue }</invoicevalue>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
+*|<Eway>{ lv_waybillno }</Eway>| &&
+*|<ASNNO>{ lv_asn }</ASNNO>| &&
+*|<orgfor>{ io_text }</orgfor>| &&
+*|</x>| .
+*
+*    " ============================================================
+*    " COPY 4 - Extra Copy
+*    " ============================================================
+*
+*    DATA(lv_header_d) =
+*|<d>| &&
+*|<table>| &&
+*|<Table2>| &&
+*|<HeaderRow>| &&
+*|<frg>{ me->escape_xml( lv_grgname ) }</frg>| &&
+*|</HeaderRow>| &&
+*|<Row1/>| .
+*
+*    DATA: lv_table_d TYPE string,
+*          lv_row_d   TYPE string,
+*          lv_sr_no_d TYPE i VALUE 0.
+*
+*    LOOP AT gt_final INTO gs_final.
+*      lv_sr_no_d += 1.
+*      CLEAR lv_table_d.
+*      lv_row_d &&=
+*|<Row2>| &&
+*|<sno>{ lv_sr_no_d }</sno>| &&
+*|<desc>{ gs_final-description }</desc>| &&
+*|<hsn>{ gs_final-hsn }</hsn>| &&
+*|<qty>{ gs_final-quantity }</qty>| &&
+*|<uom>{ gs_final-uom }</uom>| &&
+*|<ratre>{ gs_final-rate }</ratre>| &&
+*|<total>{ gs_final-total }</total>| &&
+*|<fregt>{ gs_final-freight }</fregt>| &&
+*|<taxable>{ gs_final-taxable_amt }</taxable>| &&
+*|<chstrate>{ gs_final-perc }</chstrate>| &&
+*|<cgstamt>{ gs_final-cgst_amt }</cgstamt>| &&
+*|<sgstrate>{ gs_final-pers }</sgstrate>| &&
+*|<sgstamt>{ gs_final-sgst_amt }</sgstamt>| &&
+*|<igstrate>{ gs_final-peri }</igstrate>| &&
+*|<igstamt>{ gs_final-igst_amt }</igstamt>| &&
+*|</Row2>| .
+*      lv_table_d = lv_table_d && lv_row_d.
+*    ENDLOOP.
+*
+*    lv_table_d = lv_table_d &&
+*|<FooterRow>| &&
+*|<Cell8sssss>{ lv_taxabletotal }</Cell8sssss>| &&
+*|<cgsttotal>{ gv_cgst_total }</cgsttotal>| &&
+*|<sgstto>{ gv_sgst_total }</sgstto>| &&
+*|<igsttop>{ gv_igst_total }</igsttop>| &&
+*|</FooterRow>| &&
+*|</Table2>| &&
+*|<totatax>{ lv_totaltax }</totatax>| &&
+*|<tcsamnt>{ lv_tcsamnt }</tcsamnt>| &&
+*|<tcsrate>{ lv_tcsrate }</tcsrate>| .
+*
+*    DATA(lv_footer_d) =
+*|</table>| &&
+*|<packingdetails>{ me->escape_xml( lv_pk ) }</packingdetails>| &&
+*|<kgs></kgs>| &&
+*|<invinwords>{ lv_inv_words }</invinwords>| &&
+*|<invoicevalue>{ lv_invalue }</invoicevalue>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<Subform3/>| &&
+*|<addinfo>{ me->escape_xml( lv_addinfo ) }</addinfo>| &&
+*|<Eway>{ lv_waybillno }</Eway>| &&
+*|<ASNNO>{ lv_asn }</ASNNO>| &&
+*|<orgfor>{ io_text }</orgfor>| &&
+*|</d>| .
+*
+*    " ============================================================
+*    " FINAL ASSEMBLE
+*    " ============================================================
+*
+*    DATA(lv_common) =
+*|<header>{ lv_comp }</header>| &&
+*|<addr>{ lv_hdaddr }</addr>| &&
+*|<amail>{ lv_email }</amail>| &&
+*|<web>{ website }</web>| &&
+*|<regoff>{ lv_regoff }</regoff>| &&
+*|<gstinno>{ lv_gstino }</gstinno>| &&
+*|<invdate>{ lv_date }</invdate>| &&
+*|<RNO>{ lv_lrvhedet-yy1_lrno_bdh }</RNO>| &&
+*|<VEHNO>{ lv_lrvhedet-yy1_vehicleno_bdh }</VEHNO>| &&
+*|<DESPThr>{ lv_distr }</DESPThr>| &&
+*|<BUPHNO>{ lv_po }</BUPHNO>| &&
+*|<BUYPODT>{ lv_po_dt }</BUYPODT>| &&
+*|<TFPAY>{ lv_terofpay }</TFPAY>| &&
+*|<addrbill>{ lv_addressbill }</addrbill>| &&
+*|<addrship>{ lv_addressship }</addrship>| &&
+*|<gstinbship>{ lv_gstins }</gstinbship>| &&
+*|<statecodeship>{ lv_statecode_ship }</statecodeship>| &&
+*|<statecodebill>{ lv_statecode_bill }</statecodebill>| &&
+*|<msme>{ lv_udyms }</msme>| &&
+*|<nameofbank>{ lv_bankname }</nameofbank>| &&
+*|<accno>{ lv_bankacc }</accno>| &&
+*|<bankbrcn>{ lv_branch }</bankbrcn>| &&
+*|<ifsc>{ iv_bankinternal_id }</ifsc>| &&
+*|<E-invoiceNo>{ lv_einvno }</E-invoiceNo>| &&
+*|<acknno>{ lv_ack }</acknno>| &&
+*|<placeofsupply>{ lv_region_full }</placeofsupply>| &&
+*|<invno>{ lv_invno }</invno>| &&
+*|<gstinbill>{ lv_gstinb }</gstinbill>| &&
+*|<phno>{ lv_telph }</phno>| &&
+*|<cin>{ lv_cin }</cin>| &&
+*|<udyaad>{ lv_udym }</udyaad>| &&
+*|<QRCodeBarcode1>{ qr }</QRCodeBarcode1>| &&
+*|<placeosupply>{ lv_placeof }</placeosupply>| &&
+*|</form1>| .
+*
+*    rv_xml = lv_header  && lv_table  && lv_footer  &&
+*             lv_header_b && lv_table_b && lv_footer_b &&
+*             lv_header_x && lv_table_x && lv_footer_x &&
+*             lv_header_d && lv_table_d && lv_footer_d &&
+*             lv_common.
 
 
 
